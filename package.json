@@ -1,0 +1,17 @@
+{
+  "name": "techcampus-back",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn server.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "pg": "^8.11.0",
+    "multer": "1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node-dev": "^2.0.0"
+  }
+}
