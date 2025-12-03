@@ -9,6 +9,7 @@ import teachersRoutes from "./routes/teachers";
 import notesRoutes from "./routes/notes";
 import documentsRoutes from "./routes/documents";
 import planningRoutes from "./routes/planning";
+import userClassesRoutes from "./routes/userClasses";
 
 import { db } from "./db"; // <-- IMPORTANT : APRES les imports
 
@@ -25,6 +26,7 @@ app.use("/teachers", teachersRoutes);
 app.use("/notes", notesRoutes);
 app.use("/documents", documentsRoutes);
 app.use("/planning", planningRoutes);
+app.use("/user-classes", userClassesRoutes);
 
 // TEST CONNEXION BDD
 db.query("SELECT NOW()").then(res => {

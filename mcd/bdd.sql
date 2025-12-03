@@ -1,3 +1,9 @@
+CREATE TABLE user_classes (
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  class_id INT REFERENCES classes(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, class_id)
+);
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name TEXT,
@@ -51,3 +57,4 @@ CREATE TABLE notifications (
     user_id INT REFERENCES users(id),
     message TEXT
 );
+
