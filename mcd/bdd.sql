@@ -129,11 +129,11 @@ INSERT INTO user_classes (user_id, class_id) VALUES
 ----------------------
 -- PLANNING
 ----------------------
-INSERT INTO planning (id, class_id, teacher_id, label, room, date, start_time, end_time) VALUES
-  (1, 1, 1, 'Programmation Web',       'B101', DATE '2025-01-06', TIME '09:00', TIME '11:00'),
-  (2, 1, 1, 'Bases de données',        'B102', DATE '2025-01-07', TIME '14:00', TIME '16:00'),
-  (3, 2, 2, 'Maths appliquées au design','C201', DATE '2025-01-06', TIME '10:00', TIME '12:00'),
-  (4, 2, 2, 'Statistiques',            'C202', DATE '2025-01-08', TIME '08:30', TIME '10:00');
+INSERT INTO planning (class_id, teacher_id, label, room, date, start_time, end_time) VALUES
+  (1, 1, 'Programmation Web',       'B101', DATE '2025-01-06', TIME '09:00', TIME '11:00'),
+  (1, 1, 'Bases de données',        'B102', DATE '2025-01-07', TIME '14:00', TIME '16:00'),
+  (2, 2, 'Maths appliquées au design','C201', DATE '2025-01-06', TIME '10:00', TIME '12:00'),
+  (2, 2, 'Statistiques',            'C202', DATE '2025-01-08', TIME '08:30', TIME '10:00');
 
 ----------------------
 -- NOTES
@@ -160,5 +160,7 @@ INSERT INTO notifications (id, user_id, message) VALUES
   (2, 5, 'Une nouvelle note a été ajoutée à votre relevé.'),
   (3, 2, 'Vous avez 2 cours programmés cette semaine.'),
   (4, 1, 'Rapport hebdomadaire disponible dans le back-office.');
+
+
 
 COMMIT;
