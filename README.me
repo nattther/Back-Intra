@@ -1,0 +1,37 @@
+# TechCampus-Back — Backend API (Node.js + Express + PostgreSQL)
+
+## 📦 Description du projet
+
+API simple en Node.js + Express + TypeScript + PostgreSQL pour gérer :  
+- Utilisateurs (étudiants, professeurs)  
+- Classes  
+- Association utilisateur ↔ classes (un user peut avoir plusieurs classes)  
+- Notes attribuées par un professeur à un étudiant pour une classe  
+- Vérification de rôle utilisateur  
+
+C’est un back “prototype” / “minimum viable” — sans sécurité, sans validation — idéal pour tester ou développer rapidement.
+
+---
+
+## 🚀 Installation & démarrage
+
+```bash
+git clone <url-de-ton-repo>
+cd backend
+npm install
+# (optionnel) initialiser la base si elle est vide — npm run init-db
+npm run dev
+
+
+| Fonction                  | Méthode | URL                            | Body / Params                                                           | Description                                      |                        |
+| ------------------------- | ------- | ------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------ | ---------------------- |
+| Créer un utilisateur      | POST    | `/users`                       | `{ "name": "...", "email": "...", "role": "student" \| "teacher" }`     | Création d’un user avec rôle                     |                        |
+| Lister utilisateurs       | GET     | `/users`                       | —                                                                       | Retourne tous les users                          |                        |
+| Vérifier rôle utilisateur | POST    | `/users/check-role`            | `{ "userId": 1, "role": "student" }`                                    | Renvoie `{ ok: true                              | false }` selon le rôle |
+| Créer une classe          | POST    | `/classes`                     | `{ "label": "Classe X" }`                                               | Ajout d’une classe                               |                        |
+| Lister classes            | GET     | `/classes`                     | —                                                                       | Retourne toutes les classes                      |                        |
+| Associer user ↔ classe    | POST    | `/user-classes`                | `{ "userId": 1, "classId": 2 }`                                         | Ajoute l’utilisateur à la classe                 |                        |
+| Lister classes d’un user  | GET     | `/user-classes/user/:userId`   | —                                                                       | Renvoie les classes associées à un user          |                        |
+| Lister users d’une classe | GET     | `/user-classes/class/:classId` | —                                                                       | Renvoie les users associés à une classe          |                        |
+| Ajouter une note          | POST    | `/notes`                       | `{ "studentId":1, "teacherId":2, "classId":3, "value":14.5, "ects":6 }` | Ajoute une note pour un étudiant dans une classe |                        |
+| Lister toutes les notes   | GET     | `/notes`                       | —                                                                       | Retourne toutes les notes                        |                        |
