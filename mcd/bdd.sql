@@ -47,8 +47,12 @@ CREATE TABLE documents (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id),
     type TEXT,
-    file_path TEXT
+    file_path TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    validated_by_user_id INT REFERENCES users(id),
+    validated_at TIMESTAMPTZ
 );
+
 
 CREATE TABLE planning (
   id SERIAL PRIMARY KEY,
@@ -81,6 +85,14 @@ INSERT INTO users (id, name, email, role, password_hash) VALUES
   (4, 'Sam Student',   'sam.student@example.com',   'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
   (5, 'Chloe Student', 'chloe.student@example.com', 'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
   (6, 'Leo Student',   'leo.student@example.com',   'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi');
+
+INSERT INTO users (id,name, email, role, password_hash)
+VALUES (7,
+  'Paul Responsable',
+  'paul.respo@example.com',
+  'responsable_pedagogique',
+  '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi' -- mdp: test123
+);
 
 
 ----------------------

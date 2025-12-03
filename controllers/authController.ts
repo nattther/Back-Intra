@@ -15,9 +15,9 @@ const JWT_EXPIRES_IN = "2h";
  * POST /auth/login
  * Body: { email, password }
  * Retourne: { token, role, user }
- */
-export const loginUser = async (req: Request, res: Response) => {
+ */export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  console.log("LOGIN TRY:", { email, password }); // debug
 
   if (!email || !password) {
     return res.status(400).json({ error: "Missing email or password" });
@@ -30,12 +30,16 @@ export const loginUser = async (req: Request, res: Response) => {
     );
 
     if (result.rows.length === 0) {
+      console.log("LOGIN: user not found");
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const user = result.rows[0];
+    console.log("LOGIN: user found:", user.email, user.role);
 
     const isValid = await bcrypt.compare(password, user.password_hash);
+    console.log("LOGIN: password valid ?", isValid);
+
     if (!isValid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -61,6 +65,8 @@ export const loginUser = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "DB error" });
   }
 };
+
+
 
 /**
  * GET /auth/me

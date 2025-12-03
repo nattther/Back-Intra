@@ -52,3 +52,10 @@ npm run dev
 | **Planning d’un élève**              | GET     | `/planning/student/:userId` | `userId` (id du user étudiant)                                                                                                                       | Retourne les créneaux des classes où l'élève est inscrit |
 | **Planning d’un professeur**         | GET     | `/planning/teacher/:userId` | `userId` (id du user professeur)                                                                                                                     | Retourne les créneaux où il enseigne                     |
 | **Lister tous les créneaux (admin)** | GET     | `/planning`                 | —                                                                                                                                                    | Vue globale de tous les créneaux                         |
+
+
+| Fonction                             | Méthode | URL                          | Body / Params                             | Description                                      |
+| ------------------------------------ | ------- | ---------------------------- | ----------------------------------------- | ------------------------------------------------ |
+| Uploader un document                 | POST    | `/documents`                 | `multipart/form-data` : `file`, `type`    | Upload un doc pour l’utilisateur connecté (`pending`) |
+| Lister les documents en attente      | GET     | `/documents/pending`         | Header `Authorization: Bearer <token>`    | Pour le rôle `responsable_pedagogique`          |
+| Valider un document                  | PATCH   | `/documents/:id/validate`    | Header `Authorization: Bearer <token>`    | Valide un document (`status = validated`)       |
