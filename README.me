@@ -22,24 +22,33 @@ npm install
 # (optionnel) initialiser la base si elle est vide — npm run init-db
 npm run dev
 
+| Fonction                 | Méthode | URL                 | Body / Params                                                                       | Description                                         |
+| ------------------------ | ------- | ------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Créer un utilisateur** | POST    | `/users`            | `{ "name": "...", "email": "...", "role": "...", "password": "...", "classId": 1 }` | Crée un user + associe optionnellement à une classe |
+| **Lister utilisateurs**  | GET     | `/users`            | —                                                                                   | Retourne tous les users (sans password_hash)        |
+| **Vérifier rôle**        | POST    | `/users/check-role` | `{ "userId": 1, "role": "student" }`                                                | Renvoie `{ ok: true/false }`                        |
 
-| Fonction                  | Méthode | URL                            | Body / Params                                                           | Description                                      |                        |
-| ------------------------- | ------- | ------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------ | ---------------------- |
-| Créer un utilisateur      | POST    | `/users`                       | `{ "name": "...", "email": "...", "role": "student" \| "teacher" }`     | Création d’un user avec rôle                     |                        |
-| Lister utilisateurs       | GET     | `/users`                       | —                                                                       | Retourne tous les users                          |                        |
-| Vérifier rôle utilisateur | POST    | `/users/check-role`            | `{ "userId": 1, "role": "student" }`                                    | Renvoie `{ ok: true                              | false }` selon le rôle |
-| Créer une classe          | POST    | `/classes`                     | `{ "label": "Classe X" }`                                               | Ajout d’une classe                               |                        |
-| Lister classes            | GET     | `/classes`                     | —                                                                       | Retourne toutes les classes                      |                        |
-| Associer user ↔ classe    | POST    | `/user-classes`                | `{ "userId": 1, "classId": 2 }`                                         | Ajoute l’utilisateur à la classe                 |                        |
-| Lister classes d’un user  | GET     | `/user-classes/user/:userId`   | —                                                                       | Renvoie les classes associées à un user          |                        |
-| Lister users d’une classe | GET     | `/user-classes/class/:classId` | —                                                                       | Renvoie les users associés à une classe          |                        |
-| Ajouter une note          | POST    | `/notes`                       | `{ "studentId":1, "teacherId":2, "classId":3, "value":14.5, "ects":6 }` | Ajoute une note pour un étudiant dans une classe |                        |
-| Lister toutes les notes   | GET     | `/notes`                       | —                                                                       | Retourne toutes les notes                        |                        |
 
-| Fonction                                  | Méthode | URL                         | Body / Params                                                                                                                                    | Description                                                            |
-| ----------------------------------------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| Créer un créneau pour une classe          | POST    | `/planning`                 | `{ "classId": 1, "teacherId": 1, "label": "Programmation Web", "room": "B101", "date": "2025-01-06", "startTime": "09:00", "endTime": "11:00" }` | Ajoute un créneau de cours pour une classe et un prof                  |
-| Récupérer le planning d’une classe        | GET     | `/planning/class/:classId`  | `classId` dans l’URL                                                                                                                             | Liste tous les créneaux (slots) d’une classe, avec infos du prof       |
-| Récupérer le planning d’un élève          | GET     | `/planning/student/:userId` | `userId` dans l’URL (id du user, pas du student)                                                                                                 | Récupère la classe de l’élève puis le planning (slots) de cette classe |
-| Récupérer le planning d’un prof          | GET     | `/planning/teacher/:userId` | `userId` dans l’URL (id du user, pas du teacher)    
-| Lister tous les créneaux (toutes classes) | GET     | `/planning`                 | —                                                                                                                                                | Retourne tous les créneaux de toutes les classes (vue admin / debug)   |
+| Fonction                      | Méthode | URL                            | Body / Params                   | Description                                 |
+| ----------------------------- | ------- | ------------------------------ | ------------------------------- | ------------------------------------------- |
+| **Créer une classe**          | POST    | `/classes`                     | `{ "label": "Classe X" }`       | Ajoute une classe                           |
+| **Lister classes**            | GET     | `/classes`                     | —                               | Retourne toutes les classes                 |
+| **Associer user ↔ classe**    | POST    | `/user-classes`                | `{ "userId": 1, "classId": 2 }` | Ajoute l’utilisateur dans la classe         |
+| **Classes d’un user**         | GET     | `/user-classes/user/:userId`   | —                               | Retourne les classes d’un utilisateur       |
+| **Users d’une classe**        | GET     | `/user-classes/class/:classId` | —                               | Retourne les users inscrits dans une classe |
+| **Retirer user d’une classe** | DELETE  | `/user-classes`                | `{ "userId": 1, "classId": 2 }` | Supprime l’association                      |
+
+
+| Fonction                    | Méthode | URL      | Body / Params                                                                   | Description               |
+| --------------------------- | ------- | -------- | ------------------------------------------------------------------------------- | ------------------------- |
+| **Ajouter une note**        | POST    | `/notes` | `{ "studentUserId":1, "teacherUserId":2, "classId":3, "value":14.5, "ects":6 }` | Ajoute une note           |
+| **Lister toutes les notes** | GET     | `/notes` | —                                                                               | Retourne toutes les notes |
+
+
+| Fonction                             | Méthode | URL                         | Body / Params                                                                                                                                        | Description                                              |
+| ------------------------------------ | ------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Créer un créneau pour une classe** | POST    | `/planning`                 | `{ "classId": 1, "teacherUserId": 2, "label": "Programmation Web", "room": "B101", "date": "2025-01-06", "startTime": "09:00", "endTime": "11:00" }` | Ajoute un créneau pour une classe + un prof              |
+| **Planning d’une classe**            | GET     | `/planning/class/:classId`  | `classId`                                                                                                                                            | Retourne tous les créneaux de la classe                  |
+| **Planning d’un élève**              | GET     | `/planning/student/:userId` | `userId` (id du user étudiant)                                                                                                                       | Retourne les créneaux des classes où l'élève est inscrit |
+| **Planning d’un professeur**         | GET     | `/planning/teacher/:userId` | `userId` (id du user professeur)                                                                                                                     | Retourne les créneaux où il enseigne                     |
+| **Lister tous les créneaux (admin)** | GET     | `/planning`                 | —                                                                                                                                                    | Vue globale de tous les créneaux                         |

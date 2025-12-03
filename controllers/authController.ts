@@ -1,8 +1,21 @@
-// controllers/authController.ts
 import { Request, Response } from "express";
 import { db } from "../db";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
+interface JwtPayload {
+  userId: number;
+  role: string;
+}
+
+const JWT_SECRET =  "dev-secret"; 
+const JWT_EXPIRES_IN = "2h";
+
+/**
+ * POST /auth/login
+ * Body: { email, password }
+ * Retourne: { token, role, user }
+ */
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -27,16 +40,53 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Pour l’instant, on renvoie juste les infos du user (sans le hash).
-    // Plus tard tu pourras ajouter un JWT ici.
+    const token = jwt.sign(
+      { userId: user.id, role: user.role } as JwtPayload,
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
     return res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
+      token,
       role: user.role,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (err) {
     console.error("loginUser error:", err);
+    return res.status(500).json({ error: "DB error" });
+  }
+};
+
+/**
+ * GET /auth/me
+ * Récupère l'utilisateur à partir du token (middleware auth obligatoire)
+ */
+export const getMe = async (req: Request, res: Response) => {
+  // on a rajouté req.user dans le middleware
+  const authUser = (req as any).user as JwtPayload | undefined;
+
+  if (!authUser) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const result = await db.query(
+      "SELECT id, name, email, role FROM users WHERE id = $1",
+      [authUser.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error("getMe error:", err);
     return res.status(500).json({ error: "DB error" });
   }
 };
