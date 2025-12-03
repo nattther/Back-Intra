@@ -10,6 +10,8 @@ import notesRoutes from "./routes/notes";
 import documentsRoutes from "./routes/documents";
 import planningRoutes from "./routes/planning";
 
+import { db } from "./db"; // <-- IMPORTANT : APRES les imports
+
 const app = express();
 app.use(json());
 
@@ -24,6 +26,10 @@ app.use("/notes", notesRoutes);
 app.use("/documents", documentsRoutes);
 app.use("/planning", planningRoutes);
 
+// TEST CONNEXION BDD
+db.query("SELECT NOW()").then(res => {
+    console.log("Connexion PostgreSQL OK :", res.rows[0]);
+});
 
 app.listen(3000, () => {
     console.log("Backend running on http://localhost:3000");
