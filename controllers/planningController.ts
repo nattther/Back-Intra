@@ -1,25 +1,24 @@
-// controllers/planningController.ts
 import { Request, Response } from "express";
 import { db } from "../db";
 
 /**
- * Crée un créneau de cours pour une classe et un prof.
+ * Crée un créneau de cours pour une classe et un prof (user role = 'teacher').
  */
 export async function createClassSlot(req: Request, res: Response) {
-  const { classId, teacherId, label, room, date, startTime, endTime } = req.body;
+  const { classId, teacherUserId, label, room, date, startTime, endTime } = req.body;
 
-  if (!classId || !teacherId || !label || !room || !date || !startTime || !endTime) {
+  if (!classId || !teacherUserId || !label || !room || !date || !startTime || !endTime) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
     const result = await db.query(
       `
-      INSERT INTO planning (class_id, teacher_id, label, room, date, start_time, end_time)
+      INSERT INTO planning (class_id, teacher_user_id, label, room, date, start_time, end_time)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id
       `,
-      [classId, teacherId, label, room, date, startTime, endTime]
+      [classId, teacherUserId, label, room, date, startTime, endTime]
     );
 
     return res.status(201).json({ slotId: result.rows[0].id });
@@ -45,11 +44,10 @@ export async function getPlanningForClass(req: Request, res: Response) {
         p.date,
         p.start_time,
         p.end_time,
-        t.id           AS teacher_id,
+        u.id           AS teacher_user_id,
         u.name         AS teacher_name
       FROM planning p
-      JOIN teachers t   ON t.id = p.teacher_id
-      JOIN users    u   ON u.id = t.user_id
+      JOIN users   u   ON u.id = p.teacher_user_id
       WHERE p.class_id = $1
       ORDER BY p.date, p.start_time
       `,
@@ -65,7 +63,7 @@ export async function getPlanningForClass(req: Request, res: Response) {
 
 /**
  * Planning pour un élève : on passe son user_id,
- * on remonte sa classe, puis les créneaux de cette classe.
+ * on remonte ses classes, puis les créneaux de ces classes.
  */
 export async function getPlanningForStudent(req: Request, res: Response) {
   const { userId } = req.params;
@@ -74,22 +72,21 @@ export async function getPlanningForStudent(req: Request, res: Response) {
     const result = await db.query(
       `
       SELECT
-        p.id                 AS slot_id,
-        p.label              AS course_label,
+        p.id           AS slot_id,
+        p.label        AS course_label,
         p.room,
         p.date,
         p.start_time,
         p.end_time,
-        c.id                 AS class_id,
-        c.label              AS class_label,
-        t.id                 AS teacher_id,
-        u_teacher.name       AS teacher_name
-      FROM students s
-      JOIN classes  c        ON c.id = s.class_id
-      JOIN planning p        ON p.class_id = c.id
-      JOIN teachers t        ON t.id = p.teacher_id
-      JOIN users u_teacher   ON u_teacher.id = t.user_id
-      WHERE s.user_id = $1
+        c.id           AS class_id,
+        c.label        AS class_label,
+        u_teacher.id   AS teacher_user_id,
+        u_teacher.name AS teacher_name
+      FROM user_classes uc
+      JOIN classes     c         ON c.id = uc.class_id
+      JOIN planning    p         ON p.class_id = c.id
+      JOIN users       u_teacher ON u_teacher.id = p.teacher_user_id
+      WHERE uc.user_id = $1
       ORDER BY p.date, p.start_time
       `,
       [userId]
@@ -104,7 +101,7 @@ export async function getPlanningForStudent(req: Request, res: Response) {
 
 /**
  * Planning pour un prof : on passe son user_id,
- * on remonte l'entrée teachers, puis tous les créneaux où il enseigne.
+ * on récupère tous les créneaux où teacher_user_id = user_id.
  */
 export async function getPlanningForTeacher(req: Request, res: Response) {
   const { userId } = req.params;
@@ -113,21 +110,20 @@ export async function getPlanningForTeacher(req: Request, res: Response) {
     const result = await db.query(
       `
       SELECT
-        p.id                 AS slot_id,
-        p.label              AS course_label,
+        p.id           AS slot_id,
+        p.label        AS course_label,
         p.room,
         p.date,
         p.start_time,
         p.end_time,
-        c.id                 AS class_id,
-        c.label              AS class_label,
-        t.id                 AS teacher_id,
-        u_teacher.name       AS teacher_name
-      FROM teachers t
-      JOIN users    u_teacher ON u_teacher.id = t.user_id
-      JOIN planning p         ON p.teacher_id = t.id
-      JOIN classes  c         ON c.id = p.class_id
-      WHERE u_teacher.id = $1
+        c.id           AS class_id,
+        c.label        AS class_label,
+        u_teacher.id   AS teacher_user_id,
+        u_teacher.name AS teacher_name
+      FROM planning p
+      JOIN classes c        ON c.id = p.class_id
+      JOIN users   u_teacher ON u_teacher.id = p.teacher_user_id
+      WHERE p.teacher_user_id = $1
       ORDER BY p.date, p.start_time
       `,
       [userId]
@@ -141,27 +137,26 @@ export async function getPlanningForTeacher(req: Request, res: Response) {
 }
 
 /**
- * (Optionnel) Tous les créneaux de toutes les classes.
+ * Tous les créneaux (admin / debug)
  */
 export async function getAllSlots(req: Request, res: Response) {
   try {
     const result = await db.query(
       `
       SELECT
-        p.id                 AS slot_id,
-        p.label              AS course_label,
+        p.id           AS slot_id,
+        p.label        AS course_label,
         p.room,
         p.date,
         p.start_time,
         p.end_time,
-        c.id                 AS class_id,
-        c.label              AS class_label,
-        t.id                 AS teacher_id,
-        u_teacher.name       AS teacher_name
+        c.id           AS class_id,
+        c.label        AS class_label,
+        u_teacher.id   AS teacher_user_id,
+        u_teacher.name AS teacher_name
       FROM planning p
-      JOIN classes  c        ON c.id = p.class_id
-      JOIN teachers t        ON t.id = p.teacher_id
-      JOIN users u_teacher   ON u_teacher.id = t.user_id
+      JOIN classes c        ON c.id = p.class_id
+      JOIN users   u_teacher ON u_teacher.id = p.teacher_user_id
       ORDER BY p.date, p.start_time
       `
     );

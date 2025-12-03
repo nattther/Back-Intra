@@ -4,12 +4,14 @@ import multer from "multer";
 
 import usersRoutes from "./routes/users";
 import classesRoutes from "./routes/classes";
-import studentsRoutes from "./routes/students";
-import teachersRoutes from "./routes/teachers";
 import notesRoutes from "./routes/notes";
 import documentsRoutes from "./routes/documents";
 import planningRoutes from "./routes/planning";
 import userClassesRoutes from "./routes/userClasses";
+import authRoutes from "./routes/authRoutes";
+
+
+
 
 import { db } from "./db"; // <-- IMPORTANT : APRES les imports
 
@@ -21,12 +23,12 @@ app.use("/uploads", express.static("uploads"));
 // ROUTES
 app.use("/users", usersRoutes);
 app.use("/classes", classesRoutes);
-app.use("/students", studentsRoutes);
-app.use("/teachers", teachersRoutes);
 app.use("/notes", notesRoutes);
 app.use("/documents", documentsRoutes);
 app.use("/planning", planningRoutes);
 app.use("/user-classes", userClassesRoutes);
+app.use("/auth", authRoutes);
+app.use("/users", usersRoutes);
 
 // TEST CONNEXION BDD
 db.query("SELECT NOW()").then(res => {

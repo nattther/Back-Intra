@@ -1,13 +1,11 @@
 -- =========================
--- DROP TABLES (si existent)
+-- DROP TABLES
 -- =========================
 DROP TABLE IF EXISTS planning CASCADE;
 DROP TABLE IF EXISTS notes CASCADE;
 DROP TABLE IF EXISTS user_classes CASCADE;
 DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
-DROP TABLE IF EXISTS students CASCADE;
-DROP TABLE IF EXISTS teachers CASCADE;
 DROP TABLE IF EXISTS classes CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
@@ -17,38 +15,29 @@ DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    name TEXT,
-    email TEXT,
-    role TEXT
+    name  TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role  TEXT NOT NULL,          -- 'student' | 'teacher' | 'admin'
+    password_hash TEXT NOT NULL   -- mot de passe hashé (bcrypt)
 );
+
 
 CREATE TABLE classes (
     id SERIAL PRIMARY KEY,
-    label TEXT
+    label TEXT NOT NULL
 );
 
-CREATE TABLE students (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id),
-    class_id INT REFERENCES classes(id)
-);
-
-CREATE TABLE teachers (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id),
-    speciality TEXT
-);
-
+-- relation N-N user <-> class
 CREATE TABLE user_classes (
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  user_id  INT REFERENCES users(id) ON DELETE CASCADE,
   class_id INT REFERENCES classes(id) ON DELETE CASCADE,
   PRIMARY KEY (user_id, class_id)
 );
 
 CREATE TABLE notes (
    id SERIAL PRIMARY KEY,
-   student_id INT REFERENCES students(id),
-   teacher_id INT REFERENCES teachers(id),
+   student_user_id INT REFERENCES users(id), -- role = 'student'
+   teacher_user_id INT REFERENCES users(id), -- role = 'teacher'
    class_id INT REFERENCES classes(id),
    value NUMERIC,
    ects INT
@@ -64,7 +53,7 @@ CREATE TABLE documents (
 CREATE TABLE planning (
   id SERIAL PRIMARY KEY,
   class_id INT REFERENCES classes(id),
-  teacher_id INT REFERENCES teachers(id),
+  teacher_user_id INT REFERENCES users(id), -- prof = user
   label TEXT,       -- nom du cours / matière
   room TEXT,        -- salle
   date DATE NOT NULL,
@@ -78,16 +67,21 @@ CREATE TABLE notifications (
     message TEXT
 );
 
+-- =========================
+-- SEED DATA
+-- =========================
+
 ----------------------
 -- USERS
 ----------------------
-INSERT INTO users (id, name, email, role) VALUES
-  (1, 'Alice Admin',   'alice.admin@example.com',   'admin'),
-  (2, 'Thomas Teacher','thomas.teacher@example.com','teacher'),
-  (3, 'Emma Expert',   'emma.expert@example.com',   'teacher'),
-  (4, 'Sam Student',   'sam.student@example.com',   'student'),
-  (5, 'Chloe Student', 'chloe.student@example.com', 'student'),
-  (6, 'Leo Student',   'leo.student@example.com',   'student');
+INSERT INTO users (id, name, email, role, password_hash) VALUES
+  (1, 'Alice Admin',   'alice.admin@example.com',   'admin',   '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
+  (2, 'Thomas Teacher','thomas.teacher@example.com','teacher', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
+  (3, 'Emma Expert',   'emma.expert@example.com',   'teacher', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
+  (4, 'Sam Student',   'sam.student@example.com',   'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
+  (5, 'Chloe Student', 'chloe.student@example.com', 'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
+  (6, 'Leo Student',   'leo.student@example.com',   'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi');
+
 
 ----------------------
 -- CLASSES
@@ -97,25 +91,7 @@ INSERT INTO classes (id, label) VALUES
   (2, '3B Design');
 
 ----------------------
--- STUDENTS
--- (lien entre user "student" et sa classe principale)
-----------------------
-INSERT INTO students (id, user_id, class_id) VALUES
-  (1, 4, 1),  -- Sam -> 3A Info
-  (2, 5, 1),  -- Chloe -> 3A Info
-  (3, 6, 2);  -- Leo -> 3B Design
-
-----------------------
--- TEACHERS
--- (lien entre user "teacher" et sa spécialité)
-----------------------
-INSERT INTO teachers (id, user_id, speciality) VALUES
-  (1, 2, 'Informatique'),
-  (2, 3, 'Mathématiques');
-
-----------------------
 -- USER_CLASSES
--- (qui est rattaché à quelle classe : profs, élèves, admin)
 ----------------------
 INSERT INTO user_classes (user_id, class_id) VALUES
   (1, 1), -- Alice admin a accès 3A
@@ -128,21 +104,22 @@ INSERT INTO user_classes (user_id, class_id) VALUES
 
 ----------------------
 -- PLANNING
+-- teacher_user_id = id de users où role = 'teacher'
 ----------------------
-INSERT INTO planning (class_id, teacher_id, label, room, date, start_time, end_time) VALUES
-  (1, 1, 'Programmation Web',       'B101', DATE '2025-01-06', TIME '09:00', TIME '11:00'),
-  (1, 1, 'Bases de données',        'B102', DATE '2025-01-07', TIME '14:00', TIME '16:00'),
-  (2, 2, 'Maths appliquées au design','C201', DATE '2025-01-06', TIME '10:00', TIME '12:00'),
-  (2, 2, 'Statistiques',            'C202', DATE '2025-01-08', TIME '08:30', TIME '10:00');
+INSERT INTO planning (class_id, teacher_user_id, label, room, date, start_time, end_time) VALUES
+  (1, 2, 'Programmation Web',         'B101', DATE '2025-01-06', TIME '09:00', TIME '11:00'),
+  (1, 2, 'Bases de données',          'B102', DATE '2025-01-07', TIME '14:00', TIME '16:00'),
+  (2, 3, 'Maths appliquées au design','C201', DATE '2025-01-06', TIME '10:00', TIME '12:00'),
+  (2, 3, 'Statistiques',              'C202', DATE '2025-01-08', TIME '08:30', TIME '10:00');
 
 ----------------------
 -- NOTES
 ----------------------
-INSERT INTO notes (id, student_id, teacher_id, class_id, value, ects) VALUES
-  (1, 1, 1, 1, 15.5, 6),  -- Sam, Thomas, 3A Info
-  (2, 2, 1, 1, 12.0, 6),  -- Chloe, Thomas, 3A Info
-  (3, 3, 2, 2, 17.0, 5),  -- Leo, Emma, 3B Design
-  (4, 1, 1, 1, 9.5,  3);  -- Sam, deuxième note
+INSERT INTO notes (id, student_user_id, teacher_user_id, class_id, value, ects) VALUES
+  (1, 4, 2, 1, 15.5, 6),  -- Sam / Thomas / 3A
+  (2, 5, 2, 1, 12.0, 6),  -- Chloe / Thomas / 3A
+  (3, 6, 3, 2, 17.0, 5),  -- Leo / Emma / 3B
+  (4, 4, 2, 1, 9.5,  3);  -- Sam / Thomas / 3A
 
 ----------------------
 -- DOCUMENTS
@@ -161,6 +138,10 @@ INSERT INTO notifications (id, user_id, message) VALUES
   (3, 2, 'Vous avez 2 cours programmés cette semaine.'),
   (4, 1, 'Rapport hebdomadaire disponible dans le back-office.');
 
-
-
 COMMIT;
+
+-- Et après, resync des sequences si besoin :
+SELECT setval('users_id_seq',    (SELECT COALESCE(MAX(id), 0) FROM users) + 1, false);
+SELECT setval('classes_id_seq',  (SELECT COALESCE(MAX(id), 0) FROM classes) + 1, false);
+SELECT setval('planning_id_seq', (SELECT COALESCE(MAX(id), 0) FROM planning) + 1, false);
+SELECT setval('notes_id_seq',    (SELECT COALESCE(MAX(id), 0) FROM notes) + 1, false);

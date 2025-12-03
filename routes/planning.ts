@@ -1,4 +1,3 @@
-// routes/planningRoutes.ts
 import express from "express";
 import {
   createClassSlot,
@@ -22,7 +21,7 @@ router.get("/student/:userId", getPlanningForStudent);
 // planning pour un prof (via user_id)
 router.get("/teacher/:userId", getPlanningForTeacher);
 
-// tous les créneaux (admin / debug)
+// tous les slots
 router.get("/", getAllSlots);
 
 export default router;
