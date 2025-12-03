@@ -1,3 +1,17 @@
+ALTER TABLE notes
+ADD COLUMN class_id INT REFERENCES classes(id);
+
+
+CREATE TABLE notes (
+   id SERIAL PRIMARY KEY,
+   student_id INT REFERENCES students(id),
+   teacher_id INT REFERENCES teachers(id),
+   class_id INT REFERENCES classes(id),
+   value NUMERIC,
+   ects INT
+);
+
+
 CREATE TABLE user_classes (
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
   class_id INT REFERENCES classes(id) ON DELETE CASCADE,
