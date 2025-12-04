@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET =  "dev-secret";
+const JWT_SECRET = 
+ "dev-secret";
 
 interface JwtPayload {
   userId: number;

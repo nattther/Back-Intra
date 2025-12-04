@@ -1,0 +1,664 @@
+openapi: 3.0.0
+info:
+  title: Mon API
+  version: 1.0.0
+  description: API de gestion — auth, users, classes, documents, planning, paiements CVEC, etc.
+
+servers:
+  - url: http://localhost:3000
+    description: Serveur local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Alice"
+        email:
+          type: string
+          example: "alice@example.com"
+        role:
+          type: string
+          example: "student"
+        cvec_paid:
+          type: boolean
+          example: false
+        cvec_paid_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Class:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 10
+        label:
+          type: string
+          example: "Mathématiques"
+
+    Note:
+      type: object
+      properties:
+        student_user_id:
+          type: integer
+        teacher_user_id:
+          type: integer
+        class_id:
+          type: integer
+        value:
+          type: number
+        ects:
+          type: number
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        type:
+          type: string
+        file_path:
+          type: string
+        status:
+          type: string
+        validated_by_user_id:
+          type: integer
+          nullable: true
+        validated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Payment:
+      type: object
+      properties:
+        student_user_id:
+          type: integer
+        amount:
+          type: number
+        paymentToken:
+          type: string
+        providerReference:
+          type: string
+          nullable: true
+
+    PaymentResult:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+        status:
+          type: string
+          enum: [validated, rejected]
+
+    PlanningSlot:
+      type: object
+      properties:
+        slot_id:
+          type: integer
+        course_label:
+          type: string
+        room:
+          type: string
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          example: "09:00"
+        end_time:
+          type: string
+          example: "10:30"
+        class_id:
+          type: integer
+        class_label:
+          type: string
+        teacher_user_id:
+          type: integer
+        teacher_name:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      summary: Login user and return token + user info
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Success — retourne token, role, et user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  role:
+                    type: string
+                  user:
+                    $ref: "#/components/schemas/User"
+        "400":
+          description: Email ou mot de passe manquant
+        "401":
+          description: Credentials invalides
+
+  /auth/me:
+    get:
+      summary: Get current user from token
+      tags: [Auth]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Utilisateur courant
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Non autorisé / token invalide
+        "404":
+          description: Utilisateur non trouvé
+
+  /users:
+    get:
+      summary: Récupérer tous les utilisateurs
+      tags: [Users]
+      responses:
+        "200":
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+    post:
+      summary: Créer un utilisateur
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+                password:
+                  type: string
+                classId:
+                  type: integer
+                  nullable: true
+      responses:
+        "201":
+          description: Utilisateur créé, retourne userId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userId:
+                    type: integer
+        "400":
+          description: Champs manquants
+        "500":
+          description: Erreur serveur / DB
+
+  /users/check-role:
+    post:
+      summary: Vérifier le rôle d’un utilisateur
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                role:
+                  type: string
+      responses:
+        "200":
+          description: Retourne ok: true/false
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  message:
+                    type: string
+        "404":
+          description: Utilisateur non trouvé
+
+  /classes:
+    get:
+      summary: Récupérer toutes les classes
+      tags: [Classes]
+      responses:
+        "200":
+          description: Liste des classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Class"
+
+    post:
+      summary: Créer une classe
+      tags: [Classes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label:
+                  type: string
+      responses:
+        "200":
+          description: Classe créée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /payments/cvec:
+    post:
+      summary: Process CVEC payment (mock)
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "200":
+          description: Paiement traité — retourne paymentId & status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResult"
+        "400":
+          description: Requête incorrecte (montant ou données incorrectes)
+        "500":
+          description: Erreur serveur / DB
+
+  /payments/cvec/student/{userId}:
+    get:
+      summary: Get CVEC status for a student
+      tags: [Payments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Statut + historique paiements de l’étudiant
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  student:
+                    $ref: "#/components/schemas/User"
+                  payments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PaymentResult"
+        "404":
+          description: Étudiant non trouvé
+        "500":
+          description: Erreur serveur
+
+  /documents:
+    post:
+      summary: Upload a document (file + type), utilisateur connecté
+      tags: [Documents]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+      responses:
+        "200":
+          description: Document mis en attente de validation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /documents/pending:
+    get:
+      summary: Récupérer les documents en attente (admin / responsable_pedagogique)
+      tags: [Documents]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Liste des documents en attente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+
+  /documents/{id}/validate:
+    patch:
+      summary: Valider un document (par un responsable pédagogique)
+      tags: [Documents]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document validé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  document:
+                    $ref: "#/components/schemas/Document"
+        "404":
+          description: Document non trouvé
+        "500":
+          description: Erreur serveur
+
+  /notes:
+    get:
+      summary: Lister toutes les notes
+      tags: [Notes]
+      responses:
+        "200":
+          description: Liste des notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+
+    post:
+      summary: Ajouter une note
+      tags: [Notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Note"
+      responses:
+        "200":
+          description: Note ajoutée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /planning:
+    get:
+      summary: Récupérer tous les créneaux (slots)
+      tags: [Planning]
+      responses:
+        "200":
+          description: Liste de tous les créneaux
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanningSlot"
+
+    post:
+      summary: Créer un créneau pour une classe
+      tags: [Planning]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                classId: { type: integer }
+                teacherUserId: { type: integer }
+                label: { type: string }
+                room: { type: string }
+                date: { type: string, format: date }
+                startTime: { type: string }
+                endTime: { type: string }
+      responses:
+        "201":
+          description: Créneau créé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slotId:
+                    type: integer
+
+  /planning/class/{classId}:
+    get:
+      summary: Récupérer le planning pour une classe
+      tags: [Planning]
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Planning de la classe
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanningSlot"
+
+  /planning/student/{userId}:
+    get:
+      summary: Récupérer le planning pour un étudiant
+      tags: [Planning]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Planning de l’étudiant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanningSlot"
+
+  /planning/teacher/{userId}:
+    get:
+      summary: Récupérer le planning pour un enseignant
+      tags: [Planning]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Planning de l’enseignant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanningSlot"
+
+  /user-classes:
+    post:
+      summary: Ajouter un utilisateur à une classe
+      tags: [UserClasses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            type: object
+            properties:
+              userId:
+                type: integer
+              classId:
+                type: integer
+      responses:
+        "200":
+          description: Utilisateur ajouté à la classe
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /user-classes/user/{userId}:
+    get:
+      summary: Récupérer les classes d’un utilisateur
+      tags: [UserClasses]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Liste de classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Class"
+
+  /user-classes/class/{classId}:
+    get:
+      summary: Récupérer les utilisateurs d’une classe
+      tags: [UserClasses]
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Liste d’utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /user-classes:
+    delete:
+      summary: Retirer un utilisateur d’une classe
+      tags: [UserClasses]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            type: object
+            properties:
+              userId:
+                type: integer
+              classId:
+                type: integer
+      responses:
+        "200":
+          description: Utilisateur retiré
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

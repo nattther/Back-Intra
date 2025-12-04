@@ -5,7 +5,7 @@ import { db } from "../db";
 export const uploadDocument = async (req: Request, res: Response) => {
   const authUser = (req as any).user as { userId: number; role: string } | undefined;
   const { type } = req.body;
-  const filePath = req.file?.path;
+  const filePath = req?.path;
 
   if (!authUser) {
     return res.status(401).json({ error: "Unauthorized" });
