@@ -5,7 +5,7 @@ info:
   description: API de gestion — auth, users, classes, documents, planning, paiements CVEC, etc.
 
 servers:
-  - url: http://localhost:3000
+  - url: https://back-intra.onrender.com
     description: Serveur local
 
 components:
