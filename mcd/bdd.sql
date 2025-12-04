@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS notes CASCADE;
 DROP TABLE IF EXISTS user_classes CASCADE;
 DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS cvec_payments CASCADE;
 DROP TABLE IF EXISTS classes CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
@@ -17,10 +18,11 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name  TEXT NOT NULL,
     email TEXT NOT NULL,
-    role  TEXT NOT NULL,          -- 'student' | 'teacher' | 'admin'
-    password_hash TEXT NOT NULL   -- mot de passe hashé (bcrypt)
+    role  TEXT NOT NULL,          -- 'student' | 'teacher' | 'admin' | 'responsable_pedagogique'
+    password_hash TEXT NOT NULL,  -- mot de passe hashé (bcrypt)
+    cvec_paid BOOLEAN NOT NULL DEFAULT false,
+    cvec_paid_at TIMESTAMPTZ
 );
-
 
 CREATE TABLE classes (
     id SERIAL PRIMARY KEY,
@@ -53,7 +55,6 @@ CREATE TABLE documents (
     validated_at TIMESTAMPTZ
 );
 
-
 CREATE TABLE planning (
   id SERIAL PRIMARY KEY,
   class_id INT REFERENCES classes(id),
@@ -71,6 +72,18 @@ CREATE TABLE notifications (
     message TEXT
 );
 
+CREATE TABLE cvec_payments (
+  id SERIAL PRIMARY KEY,
+  student_user_id INT REFERENCES users(id),
+  amount NUMERIC NOT NULL,
+  status TEXT NOT NULL,               -- 'validated' | 'rejected'
+  provider TEXT NOT NULL DEFAULT 'mock', -- nom du "provider" (ici mock)
+  provider_reference TEXT,            -- ref de paiement simulée
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  raw_payload JSONB                   -- ce qu’on reçoit du front pour debug
+);
+
 -- =========================
 -- SEED DATA
 -- =========================
@@ -86,14 +99,14 @@ INSERT INTO users (id, name, email, role, password_hash) VALUES
   (5, 'Chloe Student', 'chloe.student@example.com', 'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi'),
   (6, 'Leo Student',   'leo.student@example.com',   'student', '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi');
 
-INSERT INTO users (id,name, email, role, password_hash)
-VALUES (7,
+INSERT INTO users (id, name, email, role, password_hash)
+VALUES (
+  7,
   'Paul Responsable',
   'paul.respo@example.com',
   'responsable_pedagogique',
   '$2a$10$wzVWCk0rH6nNWjO7bCvSOuT4wYmpEjtvWJwLuwZ0z2VTP0Vr1ckBi' -- mdp: test123
 );
-
 
 ----------------------
 -- CLASSES
@@ -128,10 +141,10 @@ INSERT INTO planning (class_id, teacher_user_id, label, room, date, start_time, 
 -- NOTES
 ----------------------
 INSERT INTO notes (id, student_user_id, teacher_user_id, class_id, value, ects) VALUES
-  (1, 4, 2, 1, 15.5, 6),  -- Sam / Thomas / 3A
-  (2, 5, 2, 1, 12.0, 6),  -- Chloe / Thomas / 3A
-  (3, 6, 3, 2, 17.0, 5),  -- Leo / Emma / 3B
-  (4, 4, 2, 1, 9.5,  3);  -- Sam / Thomas / 3A
+  (1, 4, 2, 1, 15.5, 6),
+  (2, 5, 2, 1, 12.0, 6),
+  (3, 6, 3, 2, 17.0, 5),
+  (4, 4, 2, 1, 9.5,  3);
 
 ----------------------
 -- DOCUMENTS
@@ -152,8 +165,9 @@ INSERT INTO notifications (id, user_id, message) VALUES
 
 COMMIT;
 
--- Et après, resync des sequences si besoin :
+-- Resync des sequences
 SELECT setval('users_id_seq',    (SELECT COALESCE(MAX(id), 0) FROM users) + 1, false);
 SELECT setval('classes_id_seq',  (SELECT COALESCE(MAX(id), 0) FROM classes) + 1, false);
 SELECT setval('planning_id_seq', (SELECT COALESCE(MAX(id), 0) FROM planning) + 1, false);
 SELECT setval('notes_id_seq',    (SELECT COALESCE(MAX(id), 0) FROM notes) + 1, false);
+SELECT setval('cvec_payments_id_seq', (SELECT COALESCE(MAX(id), 0) FROM cvec_payments) + 1, false);

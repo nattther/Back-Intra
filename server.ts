@@ -10,6 +10,8 @@ import planningRoutes from "./routes/planning";
 import userClassesRoutes from "./routes/userClasses";
 import authRoutes from "./routes/authRoutes";
 
+import cvecRoutes from "./routes/cvecRoutes";
+
 
 
 
@@ -29,6 +31,7 @@ app.use("/planning", planningRoutes);
 app.use("/user-classes", userClassesRoutes);
 app.use("/auth", authRoutes);
 app.use("/users", usersRoutes);
+app.use("/payments", cvecRoutes);
 
 // TEST CONNEXION BDD
 db.query("SELECT NOW()").then(res => {
