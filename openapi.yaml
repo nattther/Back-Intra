@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Mon API
+  title: Techcampus API
   version: 1.0.0
   description: API de gestion — auth, users, classes, documents, planning, paiements CVEC, etc.
 
