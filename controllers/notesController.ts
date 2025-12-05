@@ -1,3 +1,4 @@
+// controllers/notesController.ts
 import { Request, Response } from "express";
 import { db } from "../db";
 
@@ -18,5 +19,31 @@ export const addNote = async (req: Request, res: Response) => {
   } catch (err) {
     console.error("addNote error:", err);
     res.status(500).json({ error: "Database error", details: err });
+  }
+};
+
+/**
+ * 🔎 Récupérer les notes pour un étudiant donné
+ * GET /notes/student/:userId
+ */
+export const getNotesByStudent = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const studentId = Number(userId);
+
+  if (Number.isNaN(studentId)) {
+    return res.status(400).json({ error: "Invalid userId parameter" });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT * FROM notes WHERE student_user_id = $1 ORDER BY id DESC`,
+      [studentId]
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    console.error("getNotesByStudent error:", err);
+    return res
+      .status(500)
+      .json({ error: "Database error", details: (err as Error).message });
   }
 };

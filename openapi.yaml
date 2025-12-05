@@ -470,6 +470,30 @@ paths:
                 properties:
                   message:
                     type: string
+      /notes/student/{userId}:
+    get:
+      summary: Récupérer les notes pour un étudiant
+      tags: [Notes]
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Liste des notes pour l'étudiant
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+        "400":
+          description: Paramètre userId invalide
+        "500":
+          description: Erreur serveur / DB
+
 
   /planning:
     get:
