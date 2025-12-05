@@ -11,6 +11,7 @@ API simple en Node.js + Express + TypeScript + PostgreSQL pour gérer :
 
 C’est un back “prototype” / “minimum viable” — sans sécurité, sans validation — idéal pour tester ou développer rapidement.
 
+Disponible ici ---> https://back-intra.onrender.com/api-docs/
 ---
 
 ## 🚀 Installation & démarrage
