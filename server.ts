@@ -27,7 +27,8 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3001",   
   "http://localhost:3000",  
-  "https://back-intra.onrender.com",    // ton front Next en dev
+  "https://back-intra.onrender.com",
+  "https://intranetfront.netlify.app",    // ton front Next en dev
   // "https://ton-front-prod.com", // à ajouter le moment venu
 ];
 
